@@ -19,6 +19,11 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
 
+const allowedOrigins = [
+  "https://vocalize-ai.vercel.app", // Your deployed frontend
+  "http://localhost:3000", // Your local development environment
+];
+
 // Configure multer for handling audio file uploads[1].
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -31,6 +36,24 @@ const storage = multer.diskStorage({
     );
   },
 });
+
+
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg =
+        "The CORS policy for this site does not allow access from the specified Origin.";
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+};
+
+// Use the configured CORS options.
+app.use(cors(corsOptions));
 
 const upload = multer({ storage: storage });
 
