@@ -1,0 +1,61 @@
+.voice-button-container {
+  position: relative;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  background-color: transparent;
+}
+
+.callout {
+  margin-bottom: 10px;
+  color: #333; /* Darker text color for better readability */
+  font-size: 18px; /* Slightly larger text */
+}
+
+.icon {
+  font-size: 40px; /* Large icon size */
+  color: white;
+  pointer-events: none; /* Add this line */
+}
+
+.voice-animation {
+  display: none; /* Add this line */
+  position: absolute;
+  top: -30px;
+  left: -30px;
+  right: -30px;
+  bottom: -30px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.voice-button {
+  border: none;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-image: linear-gradient(to right, #00b4db, #0083b0);
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.4s ease; /* Smooth transition for background changes */
+}
+
+.voice-button:hover {
+  background-image: linear-gradient(
+    to right,
+    #0094c8,
+    #006b8f
+  ); /* Darker shade on hover */
+}
+
+.voice-button.recording {
+  background-image: linear-gradient(
+    to right,
+    #cc5c55,
+    #b22222
+  ); /* Even darker gradient for listening state */
+}
