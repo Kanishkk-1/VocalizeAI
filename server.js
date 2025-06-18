@@ -89,24 +89,24 @@ app.post("/api/answer", async (req, res) => {
     const lowerPrompt = prompt.toLowerCase();
 
     // Custom handlers for real-time information to improve bot robustness[1].
-    if (lowerPrompt.includes("time") || lowerPrompt.includes("clock")) {
-      const currentTime = new Date().toLocaleString("en-US", {
-        timeZone: "Asia/Kolkata",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      return res.json({ response: `The current time is ${currentTime}.` });
-    }
+    // if (lowerPrompt.includes("current time") || lowerPrompt.includes("clock")) {
+    //   const currentTime = new Date().toLocaleString("en-US", {
+    //     timeZone: "Asia/Kolkata",
+    //     hour: "2-digit",
+    //     minute: "2-digit",
+    //   });
+    //   return res.json({ response: `The current time is ${currentTime}.` });
+    // }
 
-    if (lowerPrompt.includes("date") || lowerPrompt.includes("today")) {
-      const currentDate = new Date().toLocaleDateString("en-IN", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      return res.json({ response: `Today is ${currentDate}.` });
-    }
+    // if (lowerPrompt.includes("today's date") || lowerPrompt.includes("today")) {
+    //   const currentDate = new Date().toLocaleDateString("en-IN", {
+    //     weekday: "long",
+    //     year: "numeric",
+    //     month: "long",
+    //     day: "numeric",
+    //   });
+    //   return res.json({ response: `Today is ${currentDate}.` });
+    // }
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
