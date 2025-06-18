@@ -139,71 +139,134 @@ const VoiceAssistantPage = () => {
     }
   };
 
+
+const createAudioProcessor = (stream) => {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioContext.createMediaStreamSource(stream);
+  const analyser = audioContext.createAnalyser();
+
+  // Configure analyser for voice detection
+  analyser.fftSize = 2048;
+  analyser.smoothingTimeConstant = 0.8;
+
+  source.connect(analyser);
+
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+
+  let silenceStart = Date.now();
+  const SILENCE_THRESHOLD = 30; // Adjust this value to filter out fan noise
+  const SILENCE_DURATION = 1500; // Stop recording after 1.5s of silence
+
+  const checkAudioLevel = () => {
+    analyser.getByteFrequencyData(dataArray);
+
+    // Calculate average volume
+    const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+
+    if (average < SILENCE_THRESHOLD) {
+      if (Date.now() - silenceStart > SILENCE_DURATION && isRecording) {
+        stopRecording();
+      }
+    } else {
+      silenceStart = Date.now();
+    }
+
+    if (isRecording) {
+      requestAnimationFrame(checkAudioLevel);
+    }
+  };
+
+  checkAudioLevel();
+  return audioContext;
+};
+
+
+
+
   // Unified recording function with mobile-specific optimizations
-  const startRecording = () => {
-    setIsRecording(true);
-    setIsProcessing(true);
-    setError(null);
+const startRecording = () => {
+  setIsRecording(true);
+  setIsProcessing(true);
+  setError(null);
 
-    const constraints = {
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-        sampleRate: isMobile ? 16000 : 44100, // Lower sample rate for mobile
-        channelCount: 1, // Mono for better mobile compatibility
-      },
-    };
+  const constraints = {
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      sampleRate: isMobile ? 16000 : 44100,
+      channelCount: 1,
+      // Enhanced noise filtering
+      googEchoCancellation: true,
+      googAutoGainControl: true,
+      googNoiseSuppression: true,
+      googHighpassFilter: true,
+      googTypingNoiseDetection: true,
+      googAudioMirroring: false,
+    },
+  };
 
-    navigator.mediaDevices
-      .getUserMedia(constraints)
-      .then((stream) => {
-        // Mobile-friendly MIME type selection
-        let mimeType = "audio/webm;codecs=opus";
-        if (isMobile) {
-          if (MediaRecorder.isTypeSupported("audio/mp4")) {
-            mimeType = "audio/mp4";
-          } else if (MediaRecorder.isTypeSupported("audio/webm")) {
-            mimeType = "audio/webm";
-          } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
-            mimeType = "audio/ogg";
-          }
+  navigator.mediaDevices
+    .getUserMedia(constraints)
+    .then((stream) => {
+      // Add audio processing for noise detection
+      const audioContext = createAudioProcessor(stream);
+
+      let mimeType = "audio/webm;codecs=opus";
+      if (isMobile) {
+        if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          mimeType = "audio/mp4";
+        } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+          mimeType = "audio/webm";
+        } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
+          mimeType = "audio/ogg";
+        }
+      }
+
+      const options = { mimeType };
+      mediaRecorderRef.current = new MediaRecorder(stream, options);
+      mediaRecorderRef.current.start();
+
+      const timeout = isMobile ? 20000 : 30000;
+      setTimeout(() => {
+        if (mediaRecorderRef.current?.state === "recording") {
+          stopRecording();
+        }
+      }, timeout);
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: mimeType });
+        audioChunks = [];
+
+        // Only process if audio blob is substantial (filters out noise-only recordings)
+        if (audioBlob.size > 1000) {
+          handleTranscription(URL.createObjectURL(audioBlob), audioBlob);
+        } else {
+          setIsProcessing(false);
+          console.log("Recording too short, likely just noise");
         }
 
-        const options = { mimeType };
-        mediaRecorderRef.current = new MediaRecorder(stream, options);
-        mediaRecorderRef.current.start();
+        stream.getTracks().forEach((track) => track.stop());
+        if (audioContext) audioContext.close();
+      };
+    })
+    .catch((error) => {
+      console.error("Microphone access error:", error);
+      setError(
+        "Could not access microphone. Please check permissions and try again."
+      );
+      setIsProcessing(false);
+      setIsRecording(false);
+    });
+};
 
-        // Shorter timeout for mobile to prevent memory issues
-        const timeout = isMobile ? 20000 : 30000;
-        setTimeout(() => {
-          if (mediaRecorderRef.current?.state === "recording") {
-            stopRecording();
-          }
-        }, timeout);
-
-        mediaRecorderRef.current.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunks.push(event.data);
-          }
-        };
-
-        mediaRecorderRef.current.onstop = () => {
-          const audioBlob = new Blob(audioChunks, { type: mimeType });
-          audioChunks = [];
-          handleTranscription(URL.createObjectURL(audioBlob), audioBlob);
-          stream.getTracks().forEach((track) => track.stop());
-        };
-      })
-      .catch((error) => {
-        console.error("Microphone access error:", error);
-        setError(
-          "Could not access microphone. Please check permissions and try again."
-        );
-        setIsProcessing(false);
-        setIsRecording(false);
-      });
-  };
 
   const handleTranscription = (audioUrl, audioBlob) => {
     const formData = new FormData();
@@ -253,10 +316,13 @@ const VoiceAssistantPage = () => {
         setIsProcessing(false);
       });
   };
+const handleBrowserTTS = (text) => {
+  if ("speechSynthesis" in window) {
+    // Cancel any ongoing speech first
+    speechSynthesis.cancel();
 
-  const handleBrowserTTS = (text) => {
-    if ("speechSynthesis" in window) {
-      stopSpeaking();
+    // Small delay to ensure cancellation is processed
+    setTimeout(() => {
       setIsSpeaking(true);
 
       const utterance = new SpeechSynthesisUtterance(text);
@@ -280,11 +346,12 @@ const VoiceAssistantPage = () => {
       };
 
       speechSynthesis.speak(utterance);
-    } else {
-      console.error("Speech synthesis not supported.");
-      setIsProcessing(false);
-    }
-  };
+    }, 100);
+  } else {
+    console.error("Speech synthesis not supported.");
+    setIsProcessing(false);
+  }
+};
 
   const stopRecording = () => {
     setIsRecording(false);
