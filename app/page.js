@@ -378,6 +378,11 @@ const handleBrowserTTS = (text) => {
             Click the microphone to ask a question. Click it again to stop
             recording.
           </p>
+          <p className="text-xs sm:text-sm text-gray-500 bg-gray-100 border-l-4 border-yellow-400 p-3 rounded-md max-w-2xl mx-auto mb-4 sm:mb-6 shadow-sm">
+            ⚠️ Note: The first response after opening the app may take 10–15
+            seconds as the AI needs some time to load models, spin up resources.
+            Dun worry things get better after the first round wink wink!
+          </p>
 
           {/* Voice selection with mobile-optimized styling */}
           {availableVoices.length > 0 && (
