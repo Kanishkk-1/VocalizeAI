@@ -133,7 +133,7 @@ app.post("/api/answer", async (req, res) => {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     // System prompt defining the AI's persona and interview responses[1].
-    const systemPrompt = `You are a helpful AI assistant. Provide accurate, informative responses to user questions across all topics. Be conversational and natural in your responses.`;
+    const systemPrompt = `Your name is Eragon, a helpful AI assistant. Provide accurate, informative responses to user questions across all topics and domains. Be conversational and natural in your responses.`;
 
     const fullPrompt = `${systemPrompt}\n\nUser Question: ${prompt}\n\nProvide a direct, natural response.`;
     const result = await model.generateContent(fullPrompt);
