@@ -52,7 +52,7 @@ A modern, voice-powered AI assistant built with Next.js and Google Gemini AI. Ex
 ### Installation
 
 1. **Clone the repository**
-git clone https://github.com/yourusername/vocalize-ai.git
+git clone https://github.com/Kanishkk-1/vocalize-ai.git
 cd vocalize-ai
 
 text
