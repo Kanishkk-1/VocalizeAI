@@ -80,6 +80,28 @@ app.post("/api/transcribe", upload.single("audioData"), async (req, res) => {
   }
 });
 
+// Add this to your existing Express server to keep the server warm and to avoid cold start by hitting thid end point every 5 min
+app.get('/health', (req, res) => {
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB'
+      },
+      service: 'Vocalize AI Transcription Server'
+    });
+  });
+  
+  // Optional: Add a simple root endpoint too
+  app.get('/', (req, res) => {
+    res.status(200).json({
+      message: 'Vocalize AI Server is running',
+      endpoints: ['/health', '/api/transcribe']
+    });
+  });
+
 // Endpoint for generating answers using the Gemini API[1].
 app.post("/api/answer", async (req, res) => {
   try {
@@ -159,6 +181,38 @@ app.post("/api/tts", async (req, res) => {
     useBrowserTTS: true,
   });
 });
+
+// Keep-warm functionality to prevent cold starts
+const HEALTH_CHECK_INTERVAL = 4 * 60 * 1000; // 4 minutes
+const SERVER_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://vocalizeai.onrender.com' 
+  : 'http://localhost:5000';
+
+async function keepServerWarm() {
+  try {
+    const response = await fetch(`${SERVER_URL}/health`, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'KeepWarm-Bot/1.0'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`✅ Health check successful - Uptime: ${Math.round(data.uptime/60)} minutes`);
+    } else {
+      console.log(`⚠️ Health check returned status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('❌ Health check failed:', error.message);
+  }
+}
+
+// Only run keep-warm in production
+if (process.env.NODE_ENV === 'production') {
+  setInterval(keepServerWarm, HEALTH_CHECK_INTERVAL);
+  console.log('🔄 Keep-warm service started - pinging every 4 minutes');
+}
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
