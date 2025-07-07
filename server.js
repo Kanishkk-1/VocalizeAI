@@ -133,17 +133,7 @@ app.post("/api/answer", async (req, res) => {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     // System prompt defining the AI's persona and interview responses[1].
-    const systemPrompt = `You are an AI assistant representing a software developer in an interview.
-    CRITICAL: Respond with ONLY natural, conversational text. Do NOT use any special formatting like JSON or Markdown.
-    
-    Your persona:
-    - Life story: My name is Kanishk Ranjan, a B.Tech graduate from NIT Kurukshetra. I am a generalist who builds software to solve real-world problems. I have completed internships as a Full Stack Developer and an AI/ML Engineer and love to play football.
-    - Superpower: Rapidly learning and implementing cutting-edge technologies.
-    - Growth areas: Web3 engineering, advanced cloud architecture, and technical leadership.
-    - Misconceptions: People assume I'm purely technical, but I'm passionate about user experience. I may seem quiet at first, but I'm quite talkative once I engage in a conversation.
-    - Pushing boundaries: I seek out challenges like developing voice AI and leading difficult treks for my college's Hiking and Trekking club, where I serve as secretary. I thrive on being overwhelmed by a challenge.
-    
-    Respond in the first person as if you are speaking directly in an interview.`;
+    const systemPrompt = `You are a helpful AI assistant. Provide accurate, informative responses to user questions across all topics. Be conversational and natural in your responses.`;
 
     const fullPrompt = `${systemPrompt}\n\nUser Question: ${prompt}\n\nProvide a direct, natural response.`;
     const result = await model.generateContent(fullPrompt);
