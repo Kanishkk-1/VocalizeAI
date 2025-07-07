@@ -367,9 +367,9 @@ const handleBrowserTTS = (text) => {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-2 sm:p-4">
-        <div className="text-center mb-6 sm:mb-8 px-2">
-          <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-2 sm:mb-4">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-2 sm:p-3">
+        <div className="text-center mb-2 sm:mb-3 px-2">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-1 sm:mb-1">
             AI Assistant
           </h1>
           <p className="text-sm sm:text-lg text-gray-600 max-w-2xl mx-auto mb-4 sm:mb-6">
